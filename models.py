@@ -6,6 +6,7 @@ from util import with_client, print_size
 import requests
 from bs4 import BeautifulSoup
 
+
 @dataclass(init=False)
 class ModelBase:
 

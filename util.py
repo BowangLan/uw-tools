@@ -1,3 +1,4 @@
+from httpx import AsyncClient
 import requests
 import pickle
 
@@ -29,11 +30,11 @@ def print_size(size, unit_size: int = 1024, unit: str = 'B', current: str = ''):
         return size
     return '%.2f %s' % (size, unit)
 
-def load_cookie(client: requests.Session, cookie_filename):
+def load_cookie(client: AsyncClient , cookie_filename):
     with open(cookie_filename, 'rb') as f:
         client.cookies.update(pickle.load(f))
 
-def save_cookie(client: requests.Session, cookie_filename):
+def save_cookie(cookie_jar, cookie_filename):
     with open(cookie_filename, 'wb') as f:
-        pickle.dump(client.cookies, f)
+        pickle.dump(cookie_jar, f)
 
