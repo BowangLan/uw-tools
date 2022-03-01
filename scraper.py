@@ -1,9 +1,11 @@
 from abc import ABC, abstractclassmethod, abstractmethod
 from typing import *
 from bs4 import BeautifulSoup
-from httpx import Response, AsyncClient
+from httpx import Response, AsyncClient, Request
 from numpy import kaiser
 from rich import print
+
+from download_test import download_by_parts
 
 
 class AsyncScraperBase(ABC):
@@ -15,6 +17,9 @@ class AsyncScraperBase(ABC):
     def __init__(self, client: AsyncClient) -> None:
         self.client = client
         self.errors = []
+
+    def build_request(self, **kwargs: dict[str, Any]) -> Request:
+        pass
 
     @abstractmethod
     async def make_request(self, **kwargs: dict[str, Any]) -> Coroutine[Response, str, int]:
@@ -75,3 +80,9 @@ class SoupScraperBase(AsyncScraperBase):
     def parse(self, res: Response):
         soup = BeautifulSoup(res.text, 'html.parser')
         return self.parse_soup(soup)
+
+
+class FileDownloaderBase(AsyncScraperBase):
+
+    def parse(self, res: Response) -> Any:
+        return res.content

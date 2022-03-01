@@ -1,10 +1,15 @@
 from abc import ABC, abstractclassmethod
+from datetime import datetime
 from typing import *
 
 
 class UpdaterBase():
+    """
+    A class for updating the database given some a list of row data (each as a Python dict)
+    """
 
     primary_key: str = 'id'
+    last_updated: datetime
 
     def __init__(self, session, model) -> None:
         self.session = session
@@ -39,9 +44,10 @@ class UpdaterBase():
         return row
 
     def create_or_update(self, data: list):
-        self.updated_index_list = []
-        self.created_index_list = []
+        # self.updated_index_list = []
+        # self.created_index_list = []
         self.objects = []
+        self.last_updated = datetime.now()
         for i,row in enumerate(data):
             ins = self.row_exists(row)
             if ins:

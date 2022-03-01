@@ -1,4 +1,5 @@
 from __future__ import annotations
+from tkinter import W
 from sqlalchemy.exc import IntegrityError
 from typing import *
 import os
@@ -9,6 +10,7 @@ from models import ModelBase
 from db import Base, create_db_object, filter_fields, try_add
 import dateutil.parser
 from sqlalchemy import Column, String, Integer, DateTime, Boolean
+from canvas.canvas import CanvasCourseFileScraper, CanvasCourseFileDetailScraper
 
 from util import parse_iso_datetime, print_size
 
@@ -93,12 +95,6 @@ class Folder(Base):
     course_id = Column(String)
 
     is_root = Column(Integer, default=0)
-
-    files: List[File] = []
-    folders: List[Folder] = []
-    site: "Canvas"
-    parent: "Folder"
-    course: "Course"
 
 
     async def get_folders(self, client: AsyncClient, session):
@@ -254,10 +250,6 @@ class File(Base):
     parent_id = Column(String)
     course_id = Column(String)
 
-    site: "Canvas"
-    parent: "Folder"
-    course: "Course"
-
 
     def get_relative_path(self):
         path = self.display_name
@@ -292,5 +284,42 @@ class File(Base):
 class FileManager:
     """A file manager for managing course files on canvas"""
 
-    def __init__(self) -> None:
+    scrapers = {
+        'file': CanvasCourseFileScraper
+    }
+    client: AsyncClient
+
+    def __init__(self, client: AsyncClient) -> None:
+        self.client = client
+
+    def latest_update(self, t = '', count: int = 10):
+        """Get the latest updated files and/or folders"""
         pass
+
+    async def download_file(self, file: File):
+        s = self.scrapers['file'](self.client) 
+        data = await s.scrape(file.id)
+        if data:
+            filepath = file.get_relative_path()
+            dir = os.path.dirname(filepath)
+            if not os.path.exists(dir):
+                os.makedirs(dir)
+            with open(filepath, 'wb') as f:
+                f.write(data)
+                print(f'{filepath} saved ({len(data)})')
+
+    def download_folder(self, folder: Folder):
+        pass
+
+    def download_all(self):
+        """Download all files"""
+        pass
+
+    def get_latest_file_info(self):
+        """Get the latest file and folder information from the web"""
+        pass
+
+    def download_latest(self):
+        """Download the latest updated files"""
+        self.get_latest_file_info()
+

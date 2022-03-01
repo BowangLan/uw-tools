@@ -1,4 +1,4 @@
-from httpx import AsyncClient
+from httpx import AsyncClient, Request
 import asyncio
 import timeit
 
@@ -53,17 +53,19 @@ async def download(client: AsyncClient):
 
 
 @with_async_timeit
-async def download_by_parts(client: AsyncClient, part_count: int):
+async def download_by_parts(client: AsyncClient, req: Request):
     b_list = []
     async def download_part(rg, i, progress, task, task2 = None) -> None:
-        async with client.stream('GET', test_url, headers={'range': 'bytes='+rg}) as r:
-            async for data in r.aiter_bytes():
-                b_list[i] += data
-                progress.update(task, advance=len(data))
-                if task2:
-                    progress.update(task2, advance=len(data))
+        req.headers.update({'range': 'bytes='+rg})
+        r = await client.send(req, stream=True)
+        async for data in r.aiter_bytes():
+            b_list[i] += data
+            progress.update(task, advance=len(data))
             if task2:
-                progress.update(task2, visible=False)
+                progress.update(task2, advance=len(data))
+        await r.aclose()
+        if task2:
+            progress.update(task2, visible=False)
     
     def divide_to_parts(total: int, part_count: int) -> list:
         part_len = total // part_count
@@ -77,10 +79,10 @@ async def download_by_parts(client: AsyncClient, part_count: int):
             cur += parts[i]
         return parts, output
 
-
     print('Start async downloading')
     res = await client.get(test_url, headers={'range': 'bytes=0-1'})
     total_len = int(res.headers.get('Content-Range').split('/')[-1])
+    part_count = 80
     parts,parts_str = divide_to_parts(total_len, part_count)
     b_list = [b'' for _ in range(len(parts))]
     data = b''
@@ -136,7 +138,8 @@ async def test_download_by_parts(client):
     
 async def main():
     async with AsyncClient() as client:
-        await download_by_parts(client, pcount)
+        req = client.build_request('GET', test_url)
+        await download_by_parts(client, req)
         # await download(client)
         # await test_download_by_parts(client)
 

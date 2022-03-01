@@ -5,10 +5,12 @@ from httpx import AsyncClient
 from bs4 import BeautifulSoup
 from rich import print
 from db import create_db_object, filter_fields
+from download_test import download_by_parts
 from models import ModelBase
-from scraper import AsyncScraperBase, JSONScraperBase
+from scraper import AsyncScraperBase, FileDownloaderBase, JSONScraperBase
 from .files import Folder, create_or_update
 from httpx import Response
+
 
 base_url: str = 'https://canvas.uw.edu'
 
