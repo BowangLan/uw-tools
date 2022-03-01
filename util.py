@@ -1,6 +1,9 @@
+import timeit
 from httpx import AsyncClient
+import dateutil.parser
 import requests
 import pickle
+from rich import print
 
 def with_client(func):
     def wrapper(*args, client: requests.Session = None, **kwargs):
@@ -38,3 +41,22 @@ def save_cookie(cookie_jar, cookie_filename):
     with open(cookie_filename, 'wb') as f:
         pickle.dump(cookie_jar, f)
 
+def with_timeit(func):
+    def wrapper(*args, **kwargs):
+        start = timeit.default_timer()
+        func(*args, **kwargs)
+        duration = timeit.default_timer() - start
+        print("Finish in {:.2f} seconds".format(duration))
+    return wrapper
+
+def with_async_timeit(func):
+    async def wrapper(*args, **kwargs):
+        start = timeit.default_timer()
+        await func(*args, **kwargs)
+        duration = timeit.default_timer() - start
+        print("Finish in {:.2f} seconds".format(duration))
+    return wrapper
+
+
+def parse_iso_datetime(dt_string):
+    return dateutil.parser.isoparse(dt_string).replace(tzinfo=None)

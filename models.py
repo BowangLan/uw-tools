@@ -27,6 +27,7 @@ class ModelBase:
                 setattr(self, f.name, v)
 
 
+
 @dataclass
 class Canvas:
     base_url: str = 'https://canvas.uw.edu'

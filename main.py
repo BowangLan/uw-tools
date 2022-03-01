@@ -1,10 +1,14 @@
 import asyncio
+from venv import create
 from httpx import AsyncClient
 from settings import *
 # from models import Canvas
 from canvas.canvas import Canvas, Course
-from util import print_size, load_cookie, save_cookie
+from canvas.files import Folder, File
+import dateutil.parser
+from util import print_size, load_cookie, save_cookie, with_async_timeit
 from rich import print
+from db import init_engine, create_session
 
 # TODO load ans save cookie
 # TODO file counts under folder
@@ -14,11 +18,13 @@ from rich import print
 # TODO log
 # TODO schedule folder update
 
+
+@with_async_timeit
 async def print_course(client, c: Course):
     c.ping(client=client)
     print(c.name)
     await c.get_root_folder(client=client)
-    await c.root_folder.get_items(client=client, with_params=False, recursive=True)
+    await c.root_folder.get_items(client=client)
     # print(f'Folder count: {len(c.root_folder.folders)}')
     # print(f'File count: {len(c.root_folder.files)}')
     # c.root_folder.print_tree(recursive=True)
@@ -30,9 +36,9 @@ async def print_course(client, c: Course):
     print()
 
 
-def print_courses(site: Canvas, client):
-    for c in site.courses:
-        print(client, c)
+@with_async_timeit
+async def print_courses(site: Canvas, client):
+    await asyncio.gather(*[print_course(client, c) for c in site.courses])
 
 
 def download_all(site, client):
@@ -44,16 +50,51 @@ cookie = r'''ps_rvm_ZkiN={"pssid":"cUfHplPvgnivwQ3R-1641287405864","last-visit":
 
 
 async def main():
+    init_engine(database_string)
+    session = create_session()
+
     client = AsyncClient()
     # load_cookie(client, cookie_filename)
-    client.headers.update({'cookie': cookie, 'user-agent': user_agent})
+    # client.headers.update({'cookie': cookie, 'user-agent': user_agent})
     client.headers.update({'user-agent': user_agent})
 
     site = Canvas()
     await site.get_marked_courses(client=client)
-    # print(site.courses)
-    # print(client.cookies)
-    await print_course(client, site.courses[0])
+    c = site.courses[3]
+
+    # c.load_items_from_db(session)
+
+    # get folders from scraping
+    await c.ping(client)
+    await c.get_root_folder(client, session)
+    # await c.root_folder.get_items(client, session, recursive=True)
+    # print('Total folder count: {}'.format(c.root_folder.count('folder')))
+
+    # c.root_folder.tree()
+    c.root_folder.summary()
+
+    f = c.root_folder.folders[2]
+    # await f.files[0].download(client, '.')
+
+    # await print_courses(site, client)
+    # print([f.full_name for f in site.courses[-1].root_folder.folders])
+    # print(site.courses[-1].root_folder.count('folder'))
+
+    # save course folders to db
+    # print("Adding all folders from course {} folder {}".format(c.name, c.root_folder.full_name))
+    # c.root_folder.save_to_db(session)
+    # try:
+    #     session.commit()
+    # except Exception as e:
+    #     print(e)
+    #     session.rollback()
+    # print('Done')
+
+    # load courses from db
+    # for r in session.query(Folder).all():
+    #     print(r.id, r.updated_at, r.full_name)
+    #     print(type(r))
+
 
     # c1 = site.courses[3]
     # res = c1.get_course_page(client=client)
