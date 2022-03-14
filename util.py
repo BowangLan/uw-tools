@@ -44,17 +44,19 @@ def save_cookie(cookie_jar, cookie_filename):
 def with_timeit(func):
     def wrapper(*args, **kwargs):
         start = timeit.default_timer()
-        func(*args, **kwargs)
+        out = func(*args, **kwargs)
         duration = timeit.default_timer() - start
         print("Finish in {:.2f} seconds".format(duration))
+        return out
     return wrapper
 
 def with_async_timeit(func):
     async def wrapper(*args, **kwargs):
         start = timeit.default_timer()
-        await func(*args, **kwargs)
+        out = await func(*args, **kwargs)
         duration = timeit.default_timer() - start
         print("Finish in {:.2f} seconds".format(duration))
+        return out
     return wrapper
 
 

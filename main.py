@@ -4,7 +4,7 @@ from httpx import AsyncClient
 from settings import *
 # from models import Canvas
 from canvas.canvas import Canvas, Course
-from canvas.files import Folder, File
+from canvas.files import FolderModel, FileModel
 import dateutil.parser
 from util import print_size, load_cookie, save_cookie, with_async_timeit
 from rich import print

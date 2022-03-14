@@ -8,7 +8,7 @@ from db import create_db_object, filter_fields
 from download_test import download_by_parts
 from models import ModelBase
 from scraper import AsyncScraperBase, FileDownloaderBase, JSONScraperBase
-from .files import Folder, create_or_update
+from .files import FolderModel, create_or_update
 from httpx import Response
 
 
@@ -155,7 +155,7 @@ class Course(ModelBase):
     enrollment_term_id: str
     start_at: str
 
-    root_folder: Folder = None
+    root_folder: FolderModel = None
     
 
     def by_path_url(self, path: str = ''):
@@ -178,7 +178,7 @@ class Course(ModelBase):
             'parent': None,
             'course': self
         }
-        ins,status = create_or_update(Folder, session, **kwargs.copy())
+        ins,status = create_or_update(FolderModel, session, **kwargs.copy())
         return ins
 
 
@@ -187,7 +187,7 @@ class Course(ModelBase):
     
 
     def load_items_from_db(self, session):
-        ins: Folder = session.query(Folder).filter_by(course_id=self.id, is_root=1).first()
+        ins: FolderModel = session.query(FolderModel).filter_by(course_id=self.id, is_root=1).first()
         if ins:
             self.root_folder = ins
             self.root_folder.course = self

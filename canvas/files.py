@@ -76,7 +76,7 @@ def create_or_update(model, session, **kwargs):
 
 
 
-class Folder(Base):
+class FolderModel(Base):
     __tablename__ = 'folders'
 
     id = Column(String, primary_key=True)
@@ -112,7 +112,7 @@ class Folder(Base):
                 parent=self, 
                 course=self.course
             )
-            ins, u = create_or_update(Folder, session, **kwargs.copy())
+            ins, u = create_or_update(FolderModel, session, **kwargs.copy())
             if u == 1:
                 update_count += 1
             elif u == 2:
@@ -139,7 +139,7 @@ class Folder(Base):
                 parent=self, 
                 course=self.course
             )
-            ins, u = create_or_update(File, session, **kwargs.copy())
+            ins, u = create_or_update(FileModel, session, **kwargs.copy())
             if u == 1:
                 update_count += 1
             elif u == 2:
@@ -221,8 +221,8 @@ class Folder(Base):
     
     def load_subitems_from_db(self, session):
         """Load folder with matching id from the database"""
-        self.folders: list[Folder] = session.query(Folder).filter_by(parent_id=self.id).all()
-        self.files = session.query(File).filter_by(parent_id=self.id).all()
+        self.folders: list[FolderModel] = session.query(FolderModel).filter_by(parent_id=self.id).all()
+        self.files = session.query(FileModel).filter_by(parent_id=self.id).all()
         for f in self.files + self.folders:
             f.parent = self
             f.course = self.course
@@ -233,7 +233,7 @@ class Folder(Base):
 
 
 
-class File(Base):
+class FileModel(Base):
     __tablename__ = 'files'
 
     id = Column(String, primary_key=True)
@@ -278,48 +278,3 @@ class File(Base):
         with open(filename, 'bw') as f:
             f.write(res.content)
         print(f'{filename} saved ({len(res.content)})')
-
-
-
-class FileManager:
-    """A file manager for managing course files on canvas"""
-
-    scrapers = {
-        'file': CanvasCourseFileScraper
-    }
-    client: AsyncClient
-
-    def __init__(self, client: AsyncClient) -> None:
-        self.client = client
-
-    def latest_update(self, t = '', count: int = 10):
-        """Get the latest updated files and/or folders"""
-        pass
-
-    async def download_file(self, file: File):
-        s = self.scrapers['file'](self.client) 
-        data = await s.scrape(file.id)
-        if data:
-            filepath = file.get_relative_path()
-            dir = os.path.dirname(filepath)
-            if not os.path.exists(dir):
-                os.makedirs(dir)
-            with open(filepath, 'wb') as f:
-                f.write(data)
-                print(f'{filepath} saved ({len(data)})')
-
-    def download_folder(self, folder: Folder):
-        pass
-
-    def download_all(self):
-        """Download all files"""
-        pass
-
-    def get_latest_file_info(self):
-        """Get the latest file and folder information from the web"""
-        pass
-
-    def download_latest(self):
-        """Download the latest updated files"""
-        self.get_latest_file_info()
-
